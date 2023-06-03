@@ -1,15 +1,24 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+const multer = require('multer');
 
-// Criar uma instância do Express
 const app = express();
-
-// Configuração do middleware
 app.use(express.json());
 app.use(cors());
 
-// Configuração da conexão com o banco de dados MySQL
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
+
 const connection = mysql.createConnection({
   host: 'bcjyxukjdqqjhqx76bgm-mysql.services.clever-cloud.com',
   user: 'uyt8bi4ddv4t8iut',
@@ -17,31 +26,27 @@ const connection = mysql.createConnection({
   database: 'bcjyxukjdqqjhqx76bgm'
 });
 
-// Rota de exemplo para realizar uma consulta ao banco de dados
 app.get('/usuarios', (req, res) => {
-  // Executa uma consulta ao banco de dados
   connection.query('SELECT * FROM usuarios', (error, results) => {
     if (error) throw error;
 
-    // Retorna os resultados da consulta como resposta da API
     res.json(results);
   });
 });
 
-// Rota para inserir um novo usuário na tabela
-app.post('/usuarios', (req, res) => {
+app.post('/usuarios', upload.single('foto_usuario'), (req, res) => {
   const {
     nome_usuario,
     profissao_usuario,
     endereco_usuario,
     habilidades,
-    foto_usuario,
     ajudador,
     preciso_ser_ajudado,
     mora_aonde
   } = req.body;
 
-  // Executa a consulta SQL para inserir o novo usuário
+  const foto_usuario = req.file.filename;
+
   const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
@@ -49,41 +54,31 @@ app.post('/usuarios', (req, res) => {
   connection.query(query, values, (error, results) => {
     if (error) throw error;
 
-    // Retorna uma resposta indicando o sucesso da inserção
     res.json({ message: 'Usuário inserido com sucesso!' });
   });
 });
 
-
-// Rota para obter os detalhes de um usuário específico
 app.get('/usuarios/:id', (req, res) => {
-    const userId = req.params.id;
-  
-    // Executa uma consulta ao banco de dados para obter os detalhes do usuário com base no ID
-    const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
-    connection.query(query, [userId], (error, results) => {
-      if (error) throw error;
-  
-      // Verifica se o usuário foi encontrado
-      if (results.length > 0) {
-        const user = results[0];
-  
-        // Retorna os detalhes do usuário como resposta da API
-        res.json(user);
-      } else {
-        // Retorna uma resposta de erro caso o usuário não seja encontrado
-        res.status(404).json({ message: 'Usuário não encontrado' });
-      }
-    });
-  });
-  
+  const userId = req.params.id;
 
-// Inicia o servidor na porta desejada
-app.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
+  const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
+  connection.query(query, [userId], (error, results) => {
+    if (error) throw error;
+
+    if (results.length > 0) {
+      const user = results[0];
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+  });
 });
 
-// Conectar-se ao banco de dados MySQL
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
+
 connection.connect(error => {
   if (error) throw error;
   console.log('Conectado ao banco de dados MySQL');
