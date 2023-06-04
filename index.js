@@ -1,10 +1,28 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+const multer = require('multer');
+
+
+const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// Configuração do Multer para upload de imagens
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    const fileName = Date.now() + '-' + file.originalname;
+    cb(null, fileName);
+  }
+});
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const upload = multer({ storage });
 
 const connection = mysql.createConnection({
   host: 'bcjyxukjdqqjhqx76bgm-mysql.services.clever-cloud.com',
@@ -21,17 +39,19 @@ app.get('/usuarios', (req, res) => {
   });
 });
 
-app.post('/usuarios', (req, res) => {
+app.post('/usuarios', upload.single('foto_usuario'), (req, res) => {
   const {
     nome_usuario,
     profissao_usuario,
     endereco_usuario,
     habilidades,
-    foto_usuario,
     ajudador,
     preciso_ser_ajudado,
     mora_aonde
   } = req.body;
+
+  const foto_usuario = '/uploads/' + req.file.filename;
+  // Obtém o nome do arquivo de imagem enviado
 
   const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
