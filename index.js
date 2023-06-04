@@ -3,10 +3,6 @@ const mysql = require('mysql');
 const cors = require('cors');
 const multer = require('multer');
 
-app.use('/uploads', require('./api/uploads'));
-
-const path = require('path');
-
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -22,7 +18,6 @@ const storage = multer.diskStorage({
   }
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const upload = multer({ storage });
 
 const connection = mysql.createConnection({
@@ -51,8 +46,7 @@ app.post('/usuarios', upload.single('foto_usuario'), (req, res) => {
     mora_aonde
   } = req.body;
 
-  const foto_usuario = 'uploads/' + req.file.filename;
-  // Obtém o nome do arquivo de imagem enviado
+  const foto_usuario = 'uploads/'+ req.file.filename; // Obtém o nome do arquivo de imagem enviado
 
   const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
