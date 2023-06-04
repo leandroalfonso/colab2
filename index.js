@@ -46,7 +46,7 @@ app.post('/usuarios', upload.single('foto_usuario'), (req, res) => {
     mora_aonde
   } = req.body;
 
-  const foto_usuario = 'uploads/'+ req.file.filename; // Obtém o nome do arquivo de imagem enviado
+  const foto_usuario = 'colab2-eight.vercel.app/uploads/'+ req.file.filename; // Obtém o nome do arquivo de imagem enviado
 
   const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
