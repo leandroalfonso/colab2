@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const cors = require('cors');
 const multer = require('multer');
 
+app.use('/uploads', require('./api/uploads'));
 
 const path = require('path');
 
