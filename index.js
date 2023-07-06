@@ -41,14 +41,22 @@ app.post('/usuarios', (req, res) => {
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
 
-  connection.query(query, values, (error, results) => {
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
-    }
+  pool.getConnection()
+    .then(connection => {
+      connection.query(query, values, (error, results) => {
+        connection.release();
+        if (error) {
+          console.error(error);
+          return res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
+        }
 
-    res.json({ message: 'Usuário inserido com sucesso!' });
-  });
+        res.json({ message: 'Usuário inserido com sucesso!' });
+      });
+    })
+    .catch(error => {
+      console.error(error);
+      res.status(500).json({ error: 'Ocorreu um erro ao obter uma conexão com o banco de dados.' });
+    });
 });
 
 
