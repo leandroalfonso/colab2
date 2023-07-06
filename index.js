@@ -25,7 +25,7 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-app.post('/usuarios', async (req, res) => {
+app.post('/usuarios', (req, res) => {
   const {
     nome_usuario,
     profissao_usuario,
@@ -37,19 +37,20 @@ app.post('/usuarios', async (req, res) => {
     mora_aonde
   } = req.body;
 
-  try {
-    const connection = await pool.getConnection();
-    const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
+  const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
-    const [results] = await connection.query(query, values);
-    connection.release();
+  const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
+
+  connection.query(query, values, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
+    }
+
     res.json({ message: 'Usuário inserido com sucesso!' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
-  }
+  });
 });
+
 
 app.get('/usuarios/:id', async (req, res) => {
   const userId = req.params.id;
