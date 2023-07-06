@@ -45,8 +45,7 @@ app.post('/usuarios', async (req, res) => {
     const [results] = await connection.query(query, values);
     connection.release();
     res.json({ message: 'Usuário inserido com sucesso!' });
-    alert("Usuário inserido com sucesso!")
-    window.location.href = "index.html"
+    res.send('<script>alert("Usuário inserido com sucesso!!"); window.location.href = "index.html";</script>');
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
@@ -70,7 +69,7 @@ app.get('/usuarios/:id', async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Ocorreu um erro ao buscar o usuário.' });
+    res.status(500).json({ error: 'Ocorreu um erro ao buscar o usuário..' });
   }
 });
 
