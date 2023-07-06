@@ -45,6 +45,7 @@ app.post('/usuarios', async (req, res) => {
     const [results] = await connection.query(query, values);
     connection.release();
     res.json({ message: 'Usuário inserido com sucesso!' });
+    alert("Usuário inserido com sucesso!")
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
