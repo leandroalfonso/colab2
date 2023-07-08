@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const { google } = require('googleapis');
 
 const app = express();
 app.use(express.json());
@@ -13,19 +14,14 @@ const pool = mysql.createPool({
   database: 'bcjyxukjdqqjhqx76bgm'
 });
 
-app.get('/usuarios', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    const [results] = await connection.query('SELECT * FROM usuarios');
-    connection.release();
-    res.json(results);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Ocorreu um erro ao buscar os usuários.' });
-  }
+// Configuração do Google Drive
+const drive = google.drive({
+  version: 'v3',
+  auth: 'bcf858579c51ac9612d6be40a11dec243d0cd48f' // Substitua pela sua chave de API do Google Drive
 });
 
-app.post('/usuarios', (req, res) => {
+// Rota POST para inserir usuário
+app.post('/usuarios', async (req, res) => {
   const {
     nome_usuario,
     profissao_usuario,
@@ -37,49 +33,43 @@ app.post('/usuarios', (req, res) => {
     mora_aonde
   } = req.body;
 
-  const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-  const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
-
-  pool.getConnection()
-    .then(connection => {
-      connection.query(query, values, (error, results) => {
-        connection.release();
-        if (error) {
-          console.error(error);
-          return res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
-        }
-
-        res.json({ message: 'Usuário inserido com sucesso!' });
-      });
-    })
-    .catch(error => {
-      console.error(error);
-      res.status(500).json({ error: 'Ocorreu um erro ao obter uma conexão com o banco de dados.' });
-    });
-});
-
-
-app.get('/usuarios/:id', async (req, res) => {
-  const userId = req.params.id;
-
   try {
+    // Faz o upload da foto do usuário para o Google Drive
+    const fileMetadata = {
+      name: 'nome_da_foto.jpg', // Substitua pelo nome desejado para a foto
+      parents: ['13UTAugsGM18aht53thXKT_ulmsmxChZs'] // Substitua pelo ID da pasta do Google Drive onde deseja salvar a foto
+    };
+
+    const media = {
+      mimeType: 'image/jpeg',
+      body: fs.createReadStream('uploads') // Substitua pelo caminho para o arquivo de foto no servidor
+    };
+
+    const response = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id'
+    });
+
+    const foto_usuario = response.data.id;
+
+    // Insere o usuário no banco de dados
+    const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
+
     const connection = await pool.getConnection();
-    const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
-    const [results] = await connection.query(query, [userId]);
+    const [results] = await connection.query(query, values);
     connection.release();
 
-    if (results.length > 0) {
-      const user = results[0];
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'Usuário não encontrado' });
-    }
+    res.json({ message: 'Usuário inserido com sucesso!' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Ocorreu um erro ao buscar o usuário.' });
+    res.status(500).json({ error: 'Ocorreu um erro ao inserir o usuário.' });
   }
 });
+
+// Restante das rotas...
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
