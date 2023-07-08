@@ -51,12 +51,12 @@ app.post('/usuarios', async (req, res) => {
       fields: 'id'
     });
 
-    const foto_usuario = response.data.id;
+    const foto_usuario_google_drive_id = response.data.id;
 
     // Insere o usuário no banco de dados
     const query = `INSERT INTO usuarios (nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario, ajudador, preciso_ser_ajudado, mora_aonde];
+    const values = [nome_usuario, profissao_usuario, endereco_usuario, habilidades, foto_usuario_google_drive_id, ajudador, preciso_ser_ajudado, mora_aonde];
 
     const connection = await pool.getConnection();
     const [results] = await connection.query(query, values);
